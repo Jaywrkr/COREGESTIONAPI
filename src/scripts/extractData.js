@@ -15,13 +15,19 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 /**
- * Extrae datos reales de Glide
+ * Extrae datos reales de Glide con timeout y fallback
  */
 async function extractData() {
     console.log("🚀 Extrayendo datos de Proyectos Gestión desde Glide...\n");
 
     try {
-        const proyectos = await proyectosGestionTable.get();
+        // Timeout de 30 segundos para la API
+        const proyectos = await Promise.race([
+            proyectosGestionTable.get(),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("API timeout")), 30000)
+            )
+        ]);
 
         console.log(`✅ Se extrajeron ${proyectos.length} proyectos\n`);
 
@@ -29,6 +35,7 @@ async function extractData() {
             metadata: {
                 extractedAt: new Date().toISOString(),
                 totalProyectos: proyectos.length,
+                source: "glide-api",
                 columnLabels
             },
             proyectos: proyectos
@@ -44,8 +51,30 @@ async function extractData() {
         return extractedData;
 
     } catch (error) {
-        console.error("❌ Error extrayendo datos:", error.message);
-        throw error;
+        console.error("⚠️ Error extrayendo datos de Glide:", error.message);
+        console.log("💡 Creando datos de ejemplo para continuar el build...\n");
+
+        // Fallback con datos de ejemplo
+        const fallbackData = {
+            metadata: {
+                extractedAt: new Date().toISOString(),
+                totalProyectos: 0,
+                source: "fallback-example",
+                warning: "No se pudo conectar a Glide API",
+                columnLabels
+            },
+            proyectos: []
+        };
+
+        fs.writeFileSync(
+            EXTRACTED_FILE,
+            JSON.stringify(fallbackData, null, 2)
+        );
+
+        console.log(`📊 Datos de fallback guardados en: ${EXTRACTED_FILE}`);
+        console.log("⏳ Una vez conectado a Glide, ejecuta: npm run extract\n");
+
+        return fallbackData;
     }
 }
 
