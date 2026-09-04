@@ -234,6 +234,7 @@
                 <button class="tab-btn active" onclick="switchTab('overview')">📋 General</button>
                 <button class="tab-btn" onclick="switchTab('documentos')">📄 Documentación</button>
                 <button class="tab-btn" onclick="switchTab('riesgos')">⚠️ Riesgos</button>
+                <button class="tab-btn" onclick="switchTab('scoring')">🎯 Score & Procesos</button>
                 <button class="tab-btn" onclick="switchTab('datos')">📊 Datos</button>
             </div>
 
@@ -325,6 +326,64 @@
                 </div>
             </div>
 
+            <!-- TAB: Score & Procesos -->
+            <div id="tab-scoring" class="tab-content">
+                <div class="grid">
+                    <div class="card">
+                        <h3>🔴 Riesgo Alto</h3>
+                        <div class="metric" id="score-alto">-</div>
+                        <div class="metric-label">Score ≥ 60</div>
+                    </div>
+                    <div class="card">
+                        <h3>🟡 Riesgo Medio</h3>
+                        <div class="metric" id="score-medio">-</div>
+                        <div class="metric-label">Score 30-59</div>
+                    </div>
+                    <div class="card">
+                        <h3>🟢 Riesgo Bajo</h3>
+                        <div class="metric" id="score-bajo">-</div>
+                        <div class="metric-label">Score &lt; 30</div>
+                    </div>
+                    <div class="card">
+                        <h3>⛏️ Cuello de Botella</h3>
+                        <div id="bottleneck-info" style="margin-top: 10px;">-</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Tiempo Promedio por Etapa del Ciclo Contractual</h3>
+                    <p style="color:#666; font-size:0.9em; margin-bottom: 10px;">
+                        Adjudicación → Contrato → Anticipo → Entrega → Acta
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="chartProcessMining"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎯 Top 10 Proyectos Más Riesgosos</h3>
+                    <p style="color:#666; font-size:0.85em; margin-bottom: 10px;">
+                        Score explicable: 40% documentación faltante · 30% retraso · 15% antigüedad sin cierre · 15% valor del contrato
+                    </p>
+                    <div class="table-container">
+                        <table id="tableScoreRiesgo">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Administrador</th>
+                                    <th>Score</th>
+                                    <th>Docs Faltantes</th>
+                                    <th>Días Retraso</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB: Datos -->
             <div id="tab-datos" class="tab-content">
                 <div class="card">
@@ -387,6 +446,7 @@
             renderOverview();
             renderDocumentos();
             renderRiesgos();
+            renderScoring();
             renderDatos();
         }
 
@@ -499,6 +559,68 @@
                 `;
             });
             document.getElementById('tableCriticos').querySelector('tbody').innerHTML = html;
+        }
+
+        function renderScoring() {
+            const scoreRiesgo = allPatterns.scoreRiesgo || {};
+            const processMining = allPatterns.processMining || {};
+            const resumen = scoreRiesgo.resumen || {};
+
+            document.getElementById('score-alto').textContent = resumen.alto || 0;
+            document.getElementById('score-medio').textContent = resumen.medio || 0;
+            document.getElementById('score-bajo').textContent = resumen.bajo || 0;
+
+            const bottleneck = processMining.cuelloDeBotella;
+            document.getElementById('bottleneck-info').innerHTML = bottleneck
+                ? `<div style="font-size:1.3em; font-weight:bold; color:#c62828;">${bottleneck.etapa}</div>
+                   <div class="metric-label">${bottleneck.promedioDias} días promedio</div>`
+                : `<div class="metric-label">Sin datos suficientes</div>`;
+
+            // Gráfico de etapas del proceso
+            const etapas = processMining.etapas || [];
+            if (typeof Chart !== 'undefined' && etapas.length) {
+                new Chart(document.getElementById('chartProcessMining'), {
+                    type: 'bar',
+                    data: {
+                        labels: etapas.map(e => e.etapa),
+                        datasets: [
+                            {
+                                label: 'Promedio (días)',
+                                data: etapas.map(e => e.promedioDias || 0),
+                                backgroundColor: '#667eea'
+                            },
+                            {
+                                label: 'Mediana (días)',
+                                data: etapas.map(e => e.medianaDias || 0),
+                                backgroundColor: '#a5b4fc'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Tabla top riesgosos
+            const top10 = scoreRiesgo.top10MasRiesgosos || [];
+            let html = '';
+            top10.forEach(p => {
+                const riskClass = p.nivel === 'ALTO' ? 'risk-high' : (p.nivel === 'MEDIO' ? 'risk-medium' : '');
+                html += `
+                    <tr class="${riskClass}">
+                        <td style="font-size:1.3em;">${p.semaforo}</td>
+                        <td>${p.codigo}</td>
+                        <td>${p.nombre}</td>
+                        <td>${p.administrador || 'Sin Asignar'}</td>
+                        <td><strong>${p.score}</strong></td>
+                        <td>${p.factores.docsFaltantes}</td>
+                        <td>${p.factores.diasRetraso}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('tableScoreRiesgo').querySelector('tbody').innerHTML = html;
         }
 
         function renderDatos() {
