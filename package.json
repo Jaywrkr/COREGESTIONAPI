@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "extract": "node src/scripts/extractData.js",
+    "check-connection": "node src/scripts/checkConnection.mjs",
     "analyze": "node src/scripts/analyzePatterns.js",
     "build": "npm run extract && npm run analyze",
     "vercel-build": "npm run build"
