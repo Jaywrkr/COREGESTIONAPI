@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env.example
+.DS_Store
+node_modules
+npm-debug.log
+.idea
+.vscode
+*.swp
+.vercelignore
+VERCEL_DEPLOYMENT.md

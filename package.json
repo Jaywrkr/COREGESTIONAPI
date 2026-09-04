@@ -9,7 +9,8 @@
     "dev": "nodemon src/server.js",
     "extract": "node src/scripts/extractData.js",
     "analyze": "node src/scripts/analyzePatterns.js",
-    "build": "npm run extract && npm run analyze"
+    "build": "npm run extract && npm run analyze",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@glideapps/tables": "^1.0.0",
