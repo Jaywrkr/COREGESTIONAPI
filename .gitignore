@@ -1,0 +1,16 @@
+node_modules/
+package-lock.json
+yarn.lock
+.env
+.env.local
+.env.*.local
+dist/
+build/
+.DS_Store
+*.log
+data/proyectos-gestion-extracted.json
+data/patterns.json
+.idea/
+.vscode/
+*.swp
+*.swo
