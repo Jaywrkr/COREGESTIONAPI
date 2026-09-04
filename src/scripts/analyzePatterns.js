@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { countBy, groupBy, orderBy, sumBy, meanBy } from "lodash";
+import pkg from "lodash";
+const { countBy, groupBy, orderBy, sumBy, meanBy } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
